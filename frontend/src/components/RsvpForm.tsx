@@ -14,6 +14,9 @@ export interface RsvpFormProps {
   }) => Promise<void> | void;
 }
 
+const inputClasses =
+  "mt-1.5 w-full rounded-md border border-ink/15 bg-paper-dim px-3.5 py-3 text-[15px] text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none focus:ring-2 focus:ring-brass/30";
+
 export function RsvpForm({ eventId, onSubmit }: RsvpFormProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -50,70 +53,105 @@ export function RsvpForm({ eventId, onSubmit }: RsvpFormProps) {
 
   if (submitted) {
     return (
-      <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-sm text-green-800 dark:border-green-900 dark:bg-green-950 dark:text-green-300">
-        Thanks! Your RSVP has been recorded.
+      <div className="rounded-md border-l-4 border-pine bg-paper-dim p-5">
+        <p className="font-display text-lg text-ink">You&apos;re on the list</p>
+        <p className="mt-1 text-[15px] text-ink-soft">
+          Thanks, {name || "friend"} — your reply has been recorded.
+        </p>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        <label
+          htmlFor="rsvp-name"
+          className="text-sm font-medium text-ink-soft"
+        >
           Name
         </label>
         <input
+          id="rsvp-name"
           required
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900"
+          className={inputClasses}
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        <label
+          htmlFor="rsvp-email"
+          className="text-sm font-medium text-ink-soft"
+        >
           Email
         </label>
         <input
+          id="rsvp-email"
           required
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900"
+          className={inputClasses}
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Will you attend?
-        </label>
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value as RsvpStatus)}
-          className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900"
+        <label
+          htmlFor="rsvp-status"
+          className="text-sm font-medium text-ink-soft"
         >
-          <option value="yes">Yes</option>
-          <option value="maybe">Maybe</option>
-          <option value="no">No</option>
-        </select>
+          Will you be there?
+        </label>
+        <div className="relative">
+          <select
+            id="rsvp-status"
+            value={status}
+            onChange={(e) => setStatus(e.target.value as RsvpStatus)}
+            className={`${inputClasses} appearance-none pr-10`}
+          >
+            <option value="yes">Yes, I&apos;ll be there</option>
+            <option value="maybe">Maybe</option>
+            <option value="no">Can&apos;t make it</option>
+          </select>
+          <svg
+            aria-hidden
+            viewBox="0 0 20 20"
+            className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-soft"
+          >
+            <path
+              d="M5.5 8l4.5 4.5L14.5 8"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </div>
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Additional guests
+        <label
+          htmlFor="rsvp-guests"
+          className="text-sm font-medium text-ink-soft"
+        >
+          Guests you&apos;re bringing
         </label>
         <input
+          id="rsvp-guests"
           type="number"
           min={0}
           value={guestCount}
           onChange={(e) => setGuestCount(Number(e.target.value))}
-          className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900"
+          className={inputClasses}
         />
       </div>
-      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="text-sm text-clay">{error}</p>}
       <button
         type="submit"
         disabled={submitting}
-        className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+        className="w-full rounded-md bg-brass px-4 py-3.5 text-[15px] font-medium text-ink transition-colors hover:bg-brass/90 disabled:opacity-50"
       >
-        {submitting ? "Submitting..." : "Submit RSVP"}
+        {submitting ? "Sending your reply…" : "Send reply"}
       </button>
     </form>
   );
