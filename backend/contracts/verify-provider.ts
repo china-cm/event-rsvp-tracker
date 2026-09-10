@@ -10,13 +10,22 @@
  *        cd frontend && npm run dev
  *   2. The consumer test has been run at least once to generate the pact file:
  *        cd frontend && npm run test:contract:consumer
+ *   3. SUPABASE_TEST_URL / SUPABASE_TEST_ANON_KEY point at that same project,
+ *      so the "an event exists" state handler can seed the fixture row the
+ *      RSVP interaction depends on.
  *
  * Run with: npm run test:contract:provider  (from backend/contracts)
  */
 import path from "node:path";
 import { Verifier } from "@pact-foundation/pact";
+import { createClient } from "@supabase/supabase-js";
 
 const providerBaseUrl = process.env.PROVIDER_BASE_URL ?? "http://localhost:3000";
+
+const supabaseUrl = process.env.SUPABASE_TEST_URL;
+const supabaseAnonKey = process.env.SUPABASE_TEST_ANON_KEY;
+const supabase =
+  supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : null;
 
 const opts = {
   provider: "event-rsvp-api",
@@ -24,12 +33,30 @@ const opts = {
   pactUrls: [path.resolve(__dirname, "pacts/event-rsvp-frontend-event-rsvp-api.json")],
   stateHandlers: {
     "an organizer wants to create an event": () => Promise.resolve(),
-    "an event exists": (params: Record<string, unknown>) => {
-      console.warn(
-        `State "an event exists" requires eventId ${params?.eventId} to pre-exist in the ` +
-          "provider's database. Seed it via a Supabase test fixture before verification."
+    "an event exists": async (params: Record<string, unknown>) => {
+      const eventId = params?.eventId as string;
+
+      if (!supabase) {
+        console.warn(
+          `State "an event exists" requires eventId ${eventId} to pre-exist in the ` +
+            "provider's database, but SUPABASE_TEST_URL/SUPABASE_TEST_ANON_KEY are not set " +
+            "so it could not be seeded automatically."
+        );
+        return;
+      }
+
+      const { error } = await supabase.from("events").upsert(
+        {
+          id: eventId,
+          title: "Pact contract test fixture",
+          starts_at: new Date().toISOString(),
+        },
+        { onConflict: "id" }
       );
-      return Promise.resolve();
+
+      if (error) {
+        throw new Error(`Failed to seed fixture event ${eventId}: ${error.message}`);
+      }
     },
   },
 };
