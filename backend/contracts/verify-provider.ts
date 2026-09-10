@@ -10,9 +10,12 @@
  *        cd frontend && npm run dev
  *   2. The consumer test has been run at least once to generate the pact file:
  *        cd frontend && npm run test:contract:consumer
- *   3. SUPABASE_TEST_URL / SUPABASE_TEST_ANON_KEY point at that same project,
+ *   3. SUPABASE_TEST_URL / SUPABASE_TEST_SERVICE_KEY point at that same project,
  *      so the "an event exists" state handler can seed the fixture row the
- *      RSVP interaction depends on.
+ *      RSVP interaction depends on. This must be the secret/service_role key,
+ *      not the publishable/anon key: seeding needs to delete any RSVP left
+ *      over from a prior verification run (same fixed email every time), and
+ *      the app's own RLS policies intentionally do not allow public deletes.
  *
  * Run with: npm run test:contract:provider  (from backend/contracts)
  */
@@ -23,9 +26,9 @@ import { createClient } from "@supabase/supabase-js";
 const providerBaseUrl = process.env.PROVIDER_BASE_URL ?? "http://localhost:3000";
 
 const supabaseUrl = process.env.SUPABASE_TEST_URL;
-const supabaseAnonKey = process.env.SUPABASE_TEST_ANON_KEY;
+const supabaseServiceKey = process.env.SUPABASE_TEST_SERVICE_KEY;
 const supabase =
-  supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : null;
+  supabaseUrl && supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey) : null;
 
 const opts = {
   provider: "event-rsvp-api",
@@ -39,13 +42,13 @@ const opts = {
       if (!supabase) {
         console.warn(
           `State "an event exists" requires eventId ${eventId} to pre-exist in the ` +
-            "provider's database, but SUPABASE_TEST_URL/SUPABASE_TEST_ANON_KEY are not set " +
+            "provider's database, but SUPABASE_TEST_URL/SUPABASE_TEST_SERVICE_KEY are not set " +
             "so it could not be seeded automatically."
         );
         return;
       }
 
-      const { error } = await supabase.from("events").upsert(
+      const { error: upsertError } = await supabase.from("events").upsert(
         {
           id: eventId,
           title: "Pact contract test fixture",
@@ -54,8 +57,23 @@ const opts = {
         { onConflict: "id" }
       );
 
-      if (error) {
-        throw new Error(`Failed to seed fixture event ${eventId}: ${error.message}`);
+      if (upsertError) {
+        throw new Error(`Failed to seed fixture event ${eventId}: ${upsertError.message}`);
+      }
+
+      // The RSVP interaction replays a fixed request body (same email) every
+      // run, so clear out any RSVP a prior verification left behind against
+      // this fixture event — otherwise the unique (event_id, email)
+      // constraint rejects the insert on every run after the first.
+      const { error: deleteError } = await supabase
+        .from("rsvps")
+        .delete()
+        .eq("event_id", eventId);
+
+      if (deleteError) {
+        throw new Error(
+          `Failed to clear prior RSVPs for fixture event ${eventId}: ${deleteError.message}`
+        );
       }
     },
   },

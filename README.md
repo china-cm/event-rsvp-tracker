@@ -106,9 +106,12 @@ against a real running instance of the Next.js API routes and checks the respons
 
 In CI (`pact.yml`), this runs as two jobs: `consumer` generates and uploads the pact file,
 `provider` downloads it, boots the app against a **test** Supabase project, and verifies.
-Requires `SUPABASE_TEST_URL` / `SUPABASE_TEST_ANON_KEY` repo secrets, and the fixture event
-referenced in the RSVP interaction (see the state handler warning in
-`verify-provider.ts`) seeded in that test project.
+The `provider` job needs two sets of secrets:
+- `SUPABASE_TEST_URL` / `SUPABASE_TEST_ANON_KEY` — for the app itself (same as production).
+- `SUPABASE_TEST_URL` / `SUPABASE_TEST_SERVICE_KEY` — used only by `verify-provider.ts`'s
+  state handler to seed (and clear out prior runs of) the fixture event/RSVP the pact's
+  interactions depend on. This must be the secret/service_role key: seeding needs to bypass
+  RLS to delete a previous run's RSVP row, which the app's own public policies don't allow.
 
 ## Known limitations (first wave)
 
