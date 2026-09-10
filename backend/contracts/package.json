@@ -1,0 +1,13 @@
+{
+  "name": "event-rsvp-contracts",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "test:contract:provider": "tsx verify-provider.ts"
+  },
+  "devDependencies": {
+    "@pact-foundation/pact": "^17.1.4",
+    "tsx": "^4.23.13",
+    "typescript": "^5"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "event-rsvp-tracker",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Event RSVP Tracker - Next.js + Supabase, with Chromatic visual regression and Pact contract testing",
+  "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "lint": "npm --prefix frontend run lint",
+    "storybook": "npm --prefix frontend run storybook",
+    "build-storybook": "npm --prefix frontend run build-storybook",
+    "chromatic": "npm --prefix frontend run chromatic",
+    "test:contract:consumer": "npm --prefix frontend run test:contract:consumer",
+    "test:contract:provider": "npm --prefix backend/contracts run test:contract:provider"
+  }
+}
