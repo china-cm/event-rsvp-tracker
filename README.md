@@ -1,5 +1,7 @@
 # Event RSVP Tracker
 
+<!-- QA test: BCON-327 GitHub automation verification, CL-16 -->
+
 A small full-stack app for creating events and collecting RSVPs, built as a stack-stretch
 exercise: every piece of this repo — framework, backend, and automation — was chosen to be
 new territory rather than a repeat of tools already in daily use.
